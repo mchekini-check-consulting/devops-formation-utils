@@ -94,9 +94,14 @@ fi
 
 ACR_NAME="crformation"
 
-# 1. Token AAD depuis IMDS
+# 1. Récupérer le client_id de l'identity ACR depuis les tags de la VM
+ACR_CLIENT_ID=$(curl -s -H "Metadata: true" \
+  "http://169.254.169.254/metadata/instance/compute/tagsList?api-version=2021-02-01" \
+  | jq -r '.[] | select(.name=="acr_identity_client_id") | .value')
+
+# 2. Token AAD depuis IMDS (avec client_id de l'identity ACR)
 ACCESS_TOKEN=$(curl -s -H "Metadata: true" \
-  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F" \
+  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F&client_id=${ACR_CLIENT_ID}" \
   | jq -r .access_token)
 
 # 2. Échange contre refresh token ACR
