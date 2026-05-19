@@ -147,6 +147,9 @@ case "$1" in
 
            echo "VM frontend détectée — démarrage du frontend uniquement..."
            docker compose -f docker-compose.front.yaml up -d
+       elif [[ "$HOSTNAME" == *back-*-02 ]]; then
+           echo "VM backend 02 détectée — démarrage du service payment uniquement..."
+           docker compose -f docker-compose.payment.yaml up -d
        else
            echo "VM backend détectée — démarrage des services backend uniquement.."
            docker compose -f docker-compose.back.yaml up -d
