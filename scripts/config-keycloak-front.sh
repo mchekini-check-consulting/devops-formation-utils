@@ -81,4 +81,67 @@ curl "${auth[@]}" -X PUT "$KC_BASE_URL/admin/realms/user" \
   -d "{\"registrationAllowed\": true, \"attributes\": {\"frontendUrl\": \"https://$KC_HOSTNAME/keycloak\"}}" -o /dev/null \
   && log "✓ realm configured (frontendUrl=$KC_HOSTNAME, registration=enabled)" || die "Failed to configure realm"
 
+# =============================================================================
+# RBAC — Create 'admin' role, assign to platform-admin, create user-standard
+# =============================================================================
+
+# --- Create realm role 'admin' ---
+log "Creating realm role 'admin'..."
+role_exists=$(curl "${auth[@]}" -o /dev/null -w "%{http_code}" \
+  "$KC_BASE_URL/admin/realms/user/roles/admin")
+
+if [[ "$role_exists" == "200" ]]; then
+  log "Role 'admin' already exists — skipping"
+else
+  curl "${auth[@]}" -X POST "$KC_BASE_URL/admin/realms/user/roles" \
+    -H "Content-Type: application/json" \
+    -d '{"name": "admin", "description": "Administrator role for backoffice access"}' \
+    -o /dev/null \
+    && log "✓ realm role 'admin' created" || die "Failed to create role 'admin'"
+fi
+
+# --- Assign 'admin' role to user 'platform-admin' ---
+log "Assigning role 'admin' to user 'platform-admin'..."
+
+platform_admin_id=$(curl "${auth[@]}" \
+  "$KC_BASE_URL/admin/realms/user/users?username=platform-admin&exact=true" \
+  | jq -r '.[0].id // empty')
+
+[[ -n "$platform_admin_id" ]] || die "User 'platform-admin' not found in realm 'user'"
+
+admin_role_json=$(curl "${auth[@]}" \
+  "$KC_BASE_URL/admin/realms/user/roles/admin")
+
+curl "${auth[@]}" -X POST \
+  "$KC_BASE_URL/admin/realms/user/users/$platform_admin_id/role-mappings/realm" \
+  -H "Content-Type: application/json" \
+  -d "[$admin_role_json]" \
+  -o /dev/null \
+  && log "✓ role 'admin' assigned to 'platform-admin'" || die "Failed to assign role"
+
+# --- Create test user 'user-standard' (default roles only, no admin) ---
+log "Creating user 'user-standard'..."
+
+std_user_exists=$(curl "${auth[@]}" \
+  "$KC_BASE_URL/admin/realms/user/users?username=user-standard&exact=true" \
+  | jq 'length')
+
+if [[ "$std_user_exists" -gt 0 ]]; then
+  log "User 'user-standard' already exists — skipping"
+else
+  curl "${auth[@]}" -X POST "$KC_BASE_URL/admin/realms/user/users" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "username": "user-standard",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Standard",
+      "lastName": "User",
+      "email": "user-standard@example.com",
+      "credentials": [{"type": "password", "value": "user-standard", "temporary": false}]
+    }' \
+    -o /dev/null \
+    && log "✓ user 'user-standard' created (password: user-standard)" || die "Failed to create user"
+fi
+
 log "Done."
