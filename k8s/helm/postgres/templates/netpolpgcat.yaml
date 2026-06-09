@@ -1,0 +1,46 @@
+---
+# NetworkPolicy — restreint le trafic réseau des pods PgCat (connection pooler)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Chart.Name }}-pgcat-netpol
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+    component: pgcat
+spec:
+  podSelector:
+    matchLabels:
+      app: pgcat
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: catalogue
+        - podSelector:
+            matchLabels:
+              app: order
+        - podSelector:
+            matchLabels:
+              app: payment
+      ports:
+        - port: 5432
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "postgres.selectorLabels" . | nindent 14 }}
+      ports:
+        - port: 5432
+          protocol: TCP
+    # DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
