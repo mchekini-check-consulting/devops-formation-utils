@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  namespace: {{ .Values.namespace }}
+data:
+  init-users.sh: |
+    #!/bin/bash
+    set -e
+
+    psql -v ON_ERROR_STOP=1 -U postgres <<EOSQL
+      DO \$\$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'backup') THEN
+          CREATE USER backup WITH ENCRYPTED PASSWORD '${BACKUP_PASSWORD}';
+        ELSE
+          ALTER USER backup WITH ENCRYPTED PASSWORD '${BACKUP_PASSWORD}';
+        END IF;
+
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'restore') THEN
+          CREATE USER restore WITH ENCRYPTED PASSWORD '${RESTORE_PASSWORD}';
+        ELSE
+          ALTER USER restore WITH ENCRYPTED PASSWORD '${RESTORE_PASSWORD}';
+        END IF;
+
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'formation') THEN
+          CREATE USER formation WITH ENCRYPTED PASSWORD 'test';
+        ELSE
+          ALTER USER formation WITH ENCRYPTED PASSWORD 'test';
+        END IF;
+      END
+      \$\$;
+
+      GRANT pg_read_all_data TO backup;
+      GRANT pg_read_all_data TO restore;
+      GRANT pg_write_all_data TO restore;
+      GRANT CREATE ON DATABASE postgres TO restore;
+      GRANT ALL ON SCHEMA public TO restore;
+    EOSQL
+
+    psql -v ON_ERROR_STOP=1 -U postgres <<EOSQL
+      SELECT 'CREATE DATABASE catalogue OWNER formation' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'catalogue')\gexec
+      SELECT 'CREATE DATABASE "order" OWNER formation'  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'order')\gexec
+      SELECT 'CREATE DATABASE payment OWNER formation'  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'payment')\gexec
+    EOSQL
+
+    for db in catalogue order payment; do
+      psql -v ON_ERROR_STOP=1 -U postgres -d "$db" <<EOSQL
+        GRANT ALL ON SCHEMA public TO formation;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES    TO formation;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO formation;
+    EOSQL
+    done

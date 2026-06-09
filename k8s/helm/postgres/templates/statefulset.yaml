@@ -1,0 +1,161 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ .Chart.Name }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "postgres.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+        patroni-cluster: {{ .Values.scope }}
+    spec:
+      serviceAccountName: {{ .Chart.Name }}-patroni
+      automountServiceAccountToken: true
+
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              {{- include "postgres.selectorLabels" . | nindent 14 }}
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              {{- include "postgres.selectorLabels" . | nindent 14 }}
+
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+            - name: patroni
+              containerPort: 8008
+          env:
+            - name: SCOPE
+              value: {{ .Values.scope }}
+            - name: PGROOT
+              value: /home/postgres/pgdata
+            - name: PATRONI_KUBERNETES_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: PATRONI_KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PATRONI_KUBERNETES_LABELS
+              value: '{"app": "{{ .Chart.Name }}", "patroni-cluster": "{{ .Values.scope }}"}'
+            - name: PATRONI_SUPERUSER_USERNAME
+              value: postgres
+            - name: PGPASSWORD_SUPERUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-credentials
+                  key: POSTGRES_PASSWORD
+            - name: PGUSER_STANDBY
+              value: replicator
+            - name: PGPASSWORD_STANDBY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-credentials
+                  key: REPLICATION_PASSWORD
+            - name: BACKUP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-credentials
+                  key: BACKUP_PASSWORD
+            - name: RESTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-credentials
+                  key: RESTORE_PASSWORD
+            - name: SPILO_CONFIGURATION
+              value: |
+                kubernetes:
+                  namespace: {{ .Values.namespace }}
+                  labels:
+                    app: {{ .Chart.Name }}
+                    patroni-cluster: {{ .Values.scope }}
+                  scope_label: patroni-cluster
+                  role_label: spilo-role
+                  use_endpoints: false
+                bootstrap:
+                  post_init: /patroni-scripts/init-users.sh
+                  dcs:
+                    ttl: {{ .Values.patroni.ttl }}
+                    loop_wait: {{ .Values.patroni.loopWait }}
+                    retry_timeout: {{ .Values.patroni.retryTimeout }}
+                    maximum_lag_on_failover: {{ .Values.patroni.maxLagOnFailover }}
+                    postgresql:
+                      use_pg_rewind: {{ .Values.patroni.postgresql.usePgRewind }}
+                      parameters:
+                        max_connections: {{ .Values.patroni.postgresql.maxConnections }}
+                        wal_keep_size: {{ .Values.patroni.postgresql.walKeepSize }}
+                        hot_standby_feedback: {{ .Values.patroni.postgresql.hotStandbyFeedback }}
+
+          startupProbe:
+            httpGet:
+              path: /liveness
+              port: 8008
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 8008
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /liveness
+              port: 8008
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          volumeMounts:
+            - name: pgdata
+              mountPath: /home/postgres/pgdata
+            - name: patroni-scripts
+              mountPath: /patroni-scripts
+
+      volumes:
+        - name: patroni-scripts
+          configMap:
+            name: {{ .Chart.Name }}-config
+            defaultMode: 0755
+            items:
+              - key: init-users.sh
+                path: init-users.sh
+
+  volumeClaimTemplates:
+    - metadata:
+        name: pgdata
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.storage.className }}
+        resources:
+          requests:
+            storage: {{ .Values.storage.size }}

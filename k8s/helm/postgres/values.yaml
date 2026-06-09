@@ -1,0 +1,64 @@
+namespace: dev
+
+image:
+  repository: ghcr.io/zalando/spilo-16
+  tag: "3.3-p1"
+
+replicaCount: 3
+
+scope: postgres-cluster
+
+nodeSelector:
+  workload: database
+
+tolerations:
+  - key: workload
+    operator: Equal
+    value: database
+    effect: NoSchedule
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+storage:
+  className: postgres-standard-ssd
+  size: 2Gi
+
+storageClass:
+  skuName: StandardSSD_LRS
+
+secret:
+  POSTGRES_PASSWORD: YWRtaW4xMjM=
+  REPLICATION_PASSWORD: YWRtaW4xMjM=
+  BACKUP_PASSWORD: YWRtaW4xMjM=
+  RESTORE_PASSWORD: YWRtaW4xMjM=
+
+patroni:
+  ttl: 30
+  loopWait: 10
+  retryTimeout: 10
+  maxLagOnFailover: 1048576
+  postgresql:
+    usePgRewind: true
+    maxConnections: 150
+    walKeepSize: "128MB"
+    hotStandbyFeedback: "on"
+
+probes:
+  startup:
+    failureThreshold: 30
+    periodSeconds: 10
+  readiness:
+    periodSeconds: 5
+    failureThreshold: 6
+  liveness:
+    periodSeconds: 10
+    failureThreshold: 6
+
+pdb:
+  minAvailable: 2

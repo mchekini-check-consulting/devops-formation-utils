@@ -1,0 +1,59 @@
+---
+# Headless — résolution DNS par pod pour Patroni
+# {{ .Chart.Name }}-0.{{ .Chart.Name }}.{{ .Values.namespace }}.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "postgres.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+    - name: patroni
+      port: 8008
+      targetPort: 8008
+
+---
+# Primary — Patroni pose le label spilo-role=master sur le pod élu
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-primary
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+    role: primary
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+    spilo-role: master
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+
+---
+# Replicas — lectures uniquement
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-read
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+    role: read
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+    spilo-role: replica
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
