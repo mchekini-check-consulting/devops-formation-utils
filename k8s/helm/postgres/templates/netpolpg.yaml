@@ -42,6 +42,12 @@ spec:
           port: 5432
         - protocol: TCP
           port: 8008
+    # Kubernetes API server (nécessaire pour Patroni DCS)
+    - ports:
+        - protocol: UDP
+          port: 443
+        - protocol: TCP
+          port: 443
     # DNS (résolution nécessaire pour Patroni / DCS)
     - to: []
       ports:
