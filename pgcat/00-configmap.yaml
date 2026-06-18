@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgcat-config
+  namespace: dev
+data:
+  pgcat.toml: |
+    [general]
+    host = "0.0.0.0"
+    port = 5432
+    admin_username = "pgcat"
+    admin_password = "pgcat"
+    enable_prometheus_exporter = false
+    log_level = "info"
+    worker_threads = 4
+    query_parser_enabled = true
+    primary_reads_enabled = false
+    server_tls = true
+    server_tls_certificate_verification = false
+
+    # --- catalogue ---
+    [pools.catalogue]
+    pool_mode = "transaction"
+    default_role = "any"
+    application_name = "pgcat"
+    query_parser_enabled = true
+    primary_reads_enabled = false
+
+    [pools.catalogue.users.formation]
+    username = "formation"
+    password = "test"
+    pool_size = 10
+    min_pool_size = 1
+    server_lifetime = 3600
+    idle_timeout = 600
+
+    [pools.catalogue.shards.0]
+    database = "catalogue"
+    servers = [
+      ["postgres-primary.dev.svc.cluster.local", 5432, "primary"],
+      ["postgres-read.dev.svc.cluster.local",    5432, "replica"]
+    ]
+
+    # --- order ---
+    [pools.order]
+    pool_mode = "transaction"
+    default_role = "any"
+    application_name = "pgcat"
+    query_parser_enabled = true
+    primary_reads_enabled = false
+
+    [pools.order.users.formation]
+    username = "formation"
+    password = "test"
+    pool_size = 10
+    min_pool_size = 1
+    server_lifetime = 3600
+    idle_timeout = 600
+
+    [pools.order.shards.0]
+    database = "order"
+    servers = [
+      ["postgres-primary.dev.svc.cluster.local", 5432, "primary"],
+      ["postgres-read.dev.svc.cluster.local",    5432, "replica"]
+    ]
+
+    # --- payment ---
+    [pools.payment]
+    pool_mode = "transaction"
+    default_role = "any"
+    application_name = "pgcat"
+    query_parser_enabled = true
+    primary_reads_enabled = false
+
+    [pools.payment.users.formation]
+    username = "formation"
+    password = "test"
+    pool_size = 10
+    min_pool_size = 1
+    server_lifetime = 3600
+    idle_timeout = 600
+
+    [pools.payment.shards.0]
+    database = "payment"
+    servers = [
+      ["postgres-primary.dev.svc.cluster.local", 5432, "primary"],
+      ["postgres-read.dev.svc.cluster.local",    5432, "replica"]
+    ]

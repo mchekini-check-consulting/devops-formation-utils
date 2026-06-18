@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-backup
+  namespace: postgres-backup
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            azure.workload.identity/use: "true"
+        spec:
+          serviceAccountName: sa-pg-backup
+          nodeSelector:
+            kubernetes.io/os: linux
+          restartPolicy: OnFailure
+          containers:
+            - name: pg-backup
+              image: crformation.azurecr.io/pg-backup:1.0
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              env:
+                - name: PG_HOST
+                  value: postgres-primary.dev.svc.cluster.local
+                - name: PG_USER
+                  value: postgres
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: pg-backup-credentials
+                      key: postgres-password

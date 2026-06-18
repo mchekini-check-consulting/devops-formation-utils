@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgcat
+  namespace: dev
+  labels:
+    app: pgcat
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pgcat
+  template:
+    metadata:
+      labels:
+        app: pgcat
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: pgcat
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: pgcat
+
+      containers:
+        - name: pgcat
+          image: ghcr.io/postgresml/pgcat:latest
+          ports:
+            - name: postgres
+              containerPort: 5432
+
+          volumeMounts:
+            - name: config
+              mountPath: /etc/pgcat/pgcat.toml
+              subPath: pgcat.toml
+
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
+      volumes:
+        - name: config
+          configMap:
+            name: pgcat-config
