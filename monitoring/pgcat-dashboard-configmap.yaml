@@ -1,0 +1,909 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgcat-grafana-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  pgcat-dashboard.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+            "enable": true, "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "description": "Dashboard to monitor PgCat read/write splitting and connection pooling",
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        {
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+          "id": 50, "title": "Read/Write Splitting", "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Repartition des queries entre Primary et Replica",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "fixed", "fixedColor": "red" }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Replica" },
+                "properties": [
+                  { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Primary" },
+                "properties": [
+                  { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+                ]
+              }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+          "id": 51,
+          "options": {
+            "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "right", "showLegend": true },
+            "pieType": "donut",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "tooltip": { "mode": "single", "sort": "none" },
+            "displayLabels": ["percent", "value"]
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "editorMode": "code",
+              "expr": "sum(pgcat_stats_total_query_count{role=\"replica\"})",
+              "legendFormat": "Replica",
+              "instant": true,
+              "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "editorMode": "code",
+              "expr": "sum(pgcat_stats_total_query_count{role=\"primary\"})",
+              "legendFormat": "Primary",
+              "instant": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Queries: Primary vs Replica",
+          "type": "piechart"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Repartition des queries par pool et par role",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto",
+                "fillOpacity": 80, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "lineWidth": 1, "scaleDistribution": { "type": "linear" }
+              },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
+          "id": 52,
+          "options": {
+            "barRadius": 0.05,
+            "barWidth": 0.7,
+            "groupWidth": 0.7,
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "orientation": "horizontal",
+            "showValue": "auto",
+            "stacking": "none",
+            "tooltip": { "mode": "single", "sort": "none" },
+            "xTickLabelRotation": 0
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "editorMode": "code",
+              "expr": "sum by (pool) (pgcat_stats_total_query_count{role=\"replica\"})",
+              "legendFormat": "{{pool}} - replica",
+              "instant": true,
+              "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "editorMode": "code",
+              "expr": "sum by (pool) (pgcat_stats_total_query_count{role=\"primary\"})",
+              "legendFormat": "{{pool}} - primary",
+              "instant": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Queries par Pool et Role",
+          "type": "barchart"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Nombre total de queries par role",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "fixed", "fixedColor": "red" },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }] }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Replica" },
+                "properties": [
+                  { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } },
+                  { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } }
+                ]
+              }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+          "id": 53,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "showPercentChange": false,
+            "textMode": "value_and_name"
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "editorMode": "code",
+              "expr": "sum(pgcat_stats_total_query_count{role=\"replica\"})",
+              "legendFormat": "Replica",
+              "instant": true,
+              "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "editorMode": "code",
+              "expr": "sum(pgcat_stats_total_query_count{role=\"primary\"})",
+              "legendFormat": "Primary",
+              "instant": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Total Queries",
+          "type": "stat"
+        },
+        {
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+          "id": 39, "title": "Throughput Metrics", "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Number of transactions per pool and role (primary/replica)",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 100, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 3, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 10 },
+          "id": 4,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "increase(pgcat_servers_transaction_count{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"}[1m])",
+            "legendFormat": "{{pool}} / {{role}} ({{host}})",
+            "range": true, "refId": "A"
+          }],
+          "title": "Transaction Count",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Number of individual queries per pool and role",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 100, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 3, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 6, "x": 6, "y": 10 },
+          "id": 41,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "increase(pgcat_servers_query_count{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"}[1m])",
+            "legendFormat": "{{pool}} / {{role}} ({{host}})",
+            "range": true, "refId": "A"
+          }],
+          "title": "Query Count",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Average query latency in ms",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 0, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] },
+              "unit": "ms"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 6, "x": 12, "y": 10 },
+          "id": 38,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_stats_avg_query_time{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"}",
+            "legendFormat": "{{pool}} / {{role}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Average Query Latency",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Average transaction latency in ms",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 0, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] },
+              "unit": "ms"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 6, "x": 18, "y": 10 },
+          "id": 42,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_stats_avg_xact_time{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"}",
+            "legendFormat": "{{pool}} / {{role}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Average Transaction Latency",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Data received from servers in bytes",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 100, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 3, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] },
+              "unit": "decbytes"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 12, "x": 0, "y": 16 },
+          "id": 40,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "increase(pgcat_servers_bytes_received{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"}[1m])",
+            "legendFormat": "{{pool}} / {{role}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Data Received",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Data sent to servers in bytes",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 100, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 3, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] },
+              "unit": "decbytes"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 12, "x": 12, "y": 16 },
+          "id": 10,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "increase(pgcat_servers_bytes_sent{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"}[1m])",
+            "legendFormat": "{{pool}} / {{role}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Data Sent",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+          "id": 22, "panels": [], "title": "Capacity Metrics", "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Ratio between active server connections and pool size",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 0, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 3, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "area" }
+              },
+              "mappings": [],
+              "max": 150, "min": 0,
+              "thresholds": { "mode": "percentage", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 60 }] },
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+          "id": 30,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "(pgcat_databases_current_connections{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"} / pgcat_databases_pool_size{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"}) * 100",
+            "legendFormat": "{{pool}} / {{role}} ({{host}})",
+            "range": true, "refId": "A"
+          }],
+          "title": "Server Pool Utilization %",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Clients waiting in queue for a server connection",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "bars",
+                "fillOpacity": 100, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth",
+                "lineStyle": { "fill": "solid" }, "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+          "id": 31,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_pools_cl_waiting{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Waiting Clients",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Maximum wait time for a server connection",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 0, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 5, "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] },
+              "unit": "\u00b5s"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 31 },
+          "id": 44,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "(pgcat_pools_maxwait{pool=~\"$pool\", user=~\"$user\"} * 1000000) + pgcat_pools_maxwait_us{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Maximum Wait Time by Pool",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Error count per pool and role",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "bars",
+                "fillOpacity": 50, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 31 },
+          "id": 34,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "increase(pgcat_servers_error_count{pool=~\"$pool\", role=~\"$role\", shard=~\"$shard_id\", host=~\"$host\"}[1m])",
+            "legendFormat": "{{pool}} / {{role}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Error Count",
+          "type": "timeseries"
+        },
+        {
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 38 },
+          "id": 16, "title": "Server Metrics", "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 50, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 39 },
+          "id": 26,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_pools_sv_idle{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Idle Server Connections",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 50, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 6, "x": 6, "y": 39 },
+          "id": 27,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_pools_sv_active{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Active Server Connections",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 50, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 6, "x": 12, "y": 39 },
+          "id": 28,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_pools_sv_login{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Server Connections in Login State",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 50, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 6, "x": 18, "y": 39 },
+          "id": 29,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_pools_sv_tested{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Server Connections in Tested State",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 45 },
+          "id": 12, "panels": [], "title": "Client Metrics", "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Clients connected but idle",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 50, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth",
+                "lineStyle": { "fill": "solid" }, "lineWidth": 1,
+                "pointSize": 4, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 8, "x": 0, "y": 46 },
+          "id": 14,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_pools_cl_idle{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Idle Clients",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Clients currently assigned a server connection",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 50, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth",
+                "lineStyle": { "fill": "solid" }, "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 8, "x": 8, "y": 46 },
+          "id": 1,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_pools_cl_active{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Active Clients",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Clients waiting in queue for a server connection",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text",
+                "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line",
+                "fillOpacity": 50, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                "insertNulls": false, "lineInterpolation": "smooth",
+                "lineStyle": { "fill": "solid" }, "lineWidth": 1,
+                "pointSize": 2, "scaleDistribution": { "type": "linear" },
+                "showPoints": "always", "spanNulls": false,
+                "stacking": { "group": "A", "mode": "normal" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 8, "x": 16, "y": 46 },
+          "id": 15,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [{
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "expr": "pgcat_pools_cl_waiting{pool=~\"$pool\", user=~\"$user\"}",
+            "legendFormat": "{{pool}} / {{user}}",
+            "range": true, "refId": "A"
+          }],
+          "title": "Waiting Clients",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "5s",
+      "schemaVersion": 39,
+      "tags": ["Databases", "PostgreSQL", "PgCat"],
+      "templating": {
+        "list": [
+          {
+            "allValue": ".+",
+            "current": { "selected": true, "text": "All", "value": "$__all" },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(pgcat_databases_current_connections,role)",
+            "description": "Instance Role (primary/replica)",
+            "hide": 0, "includeAll": true, "label": "Role", "multi": false,
+            "name": "role",
+            "query": { "qryType": 1, "query": "label_values(pgcat_databases_current_connections,role)" },
+            "refresh": 1, "regex": "", "skipUrlSync": false, "sort": 0, "type": "query"
+          },
+          {
+            "allValue": ".+",
+            "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(pgcat_databases_current_connections,shard)",
+            "hide": 0, "includeAll": true, "label": "Shard ID", "multi": true,
+            "name": "shard_id",
+            "query": { "qryType": 1, "query": "label_values(pgcat_databases_current_connections,shard)" },
+            "refresh": 1, "regex": "", "skipUrlSync": false, "sort": 0, "type": "query"
+          },
+          {
+            "allValue": ".+",
+            "current": { "selected": false, "text": "All", "value": "$__all" },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(pgcat_databases_current_connections,pool)",
+            "description": "PgCat Connection Pool",
+            "hide": 0, "includeAll": true, "label": "Pool Name", "multi": true,
+            "name": "pool",
+            "query": { "qryType": 1, "query": "label_values(pgcat_databases_current_connections,pool)" },
+            "refresh": 1, "regex": "", "skipUrlSync": false, "sort": 0, "type": "query"
+          },
+          {
+            "allValue": ".+",
+            "current": { "selected": true, "text": "All", "value": "$__all" },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(pgcat_databases_current_connections,host)",
+            "description": "Database host name",
+            "hide": 0, "includeAll": true, "label": "Host", "multi": false,
+            "name": "host",
+            "query": { "qryType": 1, "query": "label_values(pgcat_databases_current_connections,host)" },
+            "refresh": 1, "regex": "", "skipUrlSync": false, "sort": 0, "type": "query"
+          },
+          {
+            "allValue": ".+",
+            "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(pgcat_pools_cl_active,user)",
+            "description": "PostgreSQL username",
+            "hide": 0, "includeAll": true, "label": "Username", "multi": true,
+            "name": "user",
+            "query": { "qryType": 1, "query": "label_values(pgcat_pools_cl_active,user)" },
+            "refresh": 1, "regex": "", "skipUrlSync": false, "sort": 0, "type": "query"
+          }
+        ]
+      },
+      "time": { "from": "now-30m", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "PgCat Dashboard",
+      "uid": "pgcat-dashboard",
+      "version": 1,
+      "weekStart": ""
+    }

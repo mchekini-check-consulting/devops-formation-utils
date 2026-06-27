@@ -35,6 +35,8 @@ spec:
           ports:
             - name: postgres
               containerPort: 5432
+            - name: metrics
+              containerPort: 9930
 
           volumeMounts:
             - name: config
