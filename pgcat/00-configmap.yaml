@@ -24,7 +24,7 @@ data:
     default_role = "any"
     application_name = "pgcat"
     query_parser_enabled = true
-    primary_reads_enabled = false
+    primary_reads_enabled = true
 
     [pools.catalogue.users.formation]
     username = "formation"
@@ -43,11 +43,11 @@ data:
 
     # --- order ---
     [pools.order]
-    pool_mode = "transaction"
+    pool_mode = "session"
     default_role = "any"
     application_name = "pgcat"
     query_parser_enabled = true
-    primary_reads_enabled = false
+    primary_reads_enabled = true
 
     [pools.order.users.formation]
     username = "formation"
@@ -70,7 +70,7 @@ data:
     default_role = "any"
     application_name = "pgcat"
     query_parser_enabled = true
-    primary_reads_enabled = false
+    primary_reads_enabled = true
 
     [pools.payment.users.formation]
     username = "formation"

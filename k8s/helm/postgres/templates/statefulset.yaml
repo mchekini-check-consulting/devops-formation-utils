@@ -110,6 +110,9 @@ spec:
                         max_connections: {{ .Values.patroni.postgresql.maxConnections }}
                         wal_keep_size: {{ .Values.patroni.postgresql.walKeepSize }}
                         hot_standby_feedback: {{ .Values.patroni.postgresql.hotStandbyFeedback }}
+                        log_rotation_age: 1d
+                        log_rotation_size: 100MB
+                        log_truncate_on_rotation: "on"
 
           startupProbe:
             httpGet:
