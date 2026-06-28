@@ -1,0 +1,10 @@
+dashboard:
+  enabled: true
+  securityMode: false
+  service:
+    type: LoadBalancer
+
+chaosDaemon:
+  privileged: true
+  runtime: containerd
+  socketPath: /run/containerd/containerd.sock

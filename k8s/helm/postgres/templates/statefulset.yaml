@@ -113,6 +113,10 @@ spec:
                         log_rotation_age: 1d
                         log_rotation_size: 100MB
                         log_truncate_on_rotation: "on"
+                        log_connections: "off"
+                        log_disconnections: "off"
+                        log_statement: ddl
+                        log_min_duration_statement: 500
 
           startupProbe:
             httpGet:
