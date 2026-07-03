@@ -106,11 +106,18 @@ spec:
                     maximum_lag_on_failover: {{ .Values.patroni.maxLagOnFailover }}
                     postgresql:
                       use_pg_rewind: {{ .Values.patroni.postgresql.usePgRewind }}
+                      pg_hba:
+                        - local all all trust
+                        - host all all 127.0.0.1/32 trust
+                        - host all all ::1/128 trust
+                        - host all all {{ .Values.patroni.postgresql.pgHbaNetwork }} md5
+                        - host replication replicator {{ .Values.patroni.postgresql.pgHbaNetwork }} md5
+                        - host replication standby {{ .Values.patroni.postgresql.pgHbaNetwork }} md5
                       parameters:
                         max_connections: {{ .Values.patroni.postgresql.maxConnections }}
                         wal_keep_size: {{ .Values.patroni.postgresql.walKeepSize }}
                         hot_standby_feedback: {{ .Values.patroni.postgresql.hotStandbyFeedback }}
-                        log_rotation_age: 1d
+                        log_rotation_age: 1h
                         log_rotation_size: 100MB
                         log_truncate_on_rotation: "on"
                         log_connections: "off"

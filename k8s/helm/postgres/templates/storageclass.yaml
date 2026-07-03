@@ -1,3 +1,4 @@
+{{- if not (hasKey .Values.storageClass "create") | ternary true .Values.storageClass.create }}
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -8,3 +9,4 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Retain
 allowVolumeExpansion: true
+{{- end }}

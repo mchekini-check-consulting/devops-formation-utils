@@ -48,6 +48,7 @@ patroni:
     maxConnections: 150
     walKeepSize: "128MB"
     hotStandbyFeedback: "on"
+    pgHbaNetwork: "10.4.0.0/16"
 
 probes:
   startup:

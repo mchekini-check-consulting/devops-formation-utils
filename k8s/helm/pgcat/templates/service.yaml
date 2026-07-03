@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pgcat
-  namespace: dev
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace }}
   labels:
-    app: pgcat
+    {{- include "pgcat.labels" . | nindent 4 }}
 spec:
   selector:
-    app: pgcat
+    {{- include "pgcat.selectorLabels" . | nindent 4 }}
   ports:
     - name: postgres
       port: 5432

@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pgcat
-  namespace: dev
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace }}
   labels:
-    app: pgcat
+    {{- include "pgcat.labels" . | nindent 4 }}
 spec:
-  replicas: 2
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: pgcat
+      {{- include "pgcat.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: pgcat
+        {{- include "pgcat.selectorLabels" . | nindent 8 }}
     spec:
       topologySpreadConstraints:
         - maxSkew: 1
@@ -21,17 +21,17 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: pgcat
+              {{- include "pgcat.selectorLabels" . | nindent 14 }}
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: pgcat
+              {{- include "pgcat.selectorLabels" . | nindent 14 }}
 
       containers:
-        - name: pgcat
-          image: ghcr.io/postgresml/pgcat:latest
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           ports:
             - name: postgres
               containerPort: 5432
@@ -58,14 +58,9 @@ spec:
             failureThreshold: 3
 
           resources:
-            requests:
-              cpu: 100m
-              memory: 64Mi
-            limits:
-              cpu: 500m
-              memory: 256Mi
+            {{- toYaml .Values.resources | nindent 12 }}
 
       volumes:
         - name: config
           configMap:
-            name: pgcat-config
+            name: {{ .Chart.Name }}-config
