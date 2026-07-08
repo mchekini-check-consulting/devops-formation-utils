@@ -1,0 +1,59 @@
+namespace: dev
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/postgresml/pgcat
+  tag: latest
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+general:
+  adminUsername: pgcat
+  adminPassword: pgcat
+  logLevel: info
+  workerThreads: 4
+  healthcheckTimeout: 5000
+  healthcheckDelay: 10000
+  banTime: 60
+
+postgres:
+  primaryService: postgres-primary
+  replicaCount: 3
+
+pools:
+  - name: catalogue
+    poolMode: transaction
+    username: formation
+    password: test
+    poolSize: 10
+    minPoolSize: 1
+    serverLifetime: 300
+    idleTimeout: 60
+
+  - name: order
+    poolMode: transaction
+    username: formation
+    password: test
+    poolSize: 10
+    minPoolSize: 1
+    serverLifetime: 300
+    idleTimeout: 60
+
+  - name: payment
+    poolMode: session
+    username: formation
+    password: test
+    poolSize: 10
+    minPoolSize: 1
+    serverLifetime: 3600
+    idleTimeout: 60
+
+pdb:
+  minAvailable: 1

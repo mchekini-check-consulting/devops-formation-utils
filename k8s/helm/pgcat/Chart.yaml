@@ -1,0 +1,5 @@
+apiVersion: v2
+name: pgcat
+description: PgCat connection pooler pour PostgreSQL
+version: 1.0.0
+appVersion: "latest"

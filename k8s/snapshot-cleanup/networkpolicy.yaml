@@ -1,0 +1,24 @@
+---
+# NetworkPolicy — autorise le pod snapshot-cleanup à joindre les APIs Azure et le DNS
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: snapshot-cleanup-netpol
+  namespace: velero
+spec:
+  podSelector:
+    matchLabels:
+      app: snapshot-cleanup
+  policyTypes:
+    - Egress
+  egress:
+    # Azure APIs (management.azure.com, login.microsoftonline.com)
+    - ports:
+        - protocol: TCP
+          port: 443
+    # DNS
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

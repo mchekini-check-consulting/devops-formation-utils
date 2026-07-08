@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pgcat.labels" . | nindent 4 }}
+data:
+  pgcat.toml: |
+    [general]
+    host = "0.0.0.0"
+    port = 5432
+    admin_username = {{ .Values.general.adminUsername | quote }}
+    admin_password = {{ .Values.general.adminPassword | quote }}
+    enable_prometheus_exporter = true
+    prometheus_exporter_port = 9930
+    log_level = {{ .Values.general.logLevel | quote }}
+    worker_threads = {{ .Values.general.workerThreads }}
+    query_parser_enabled = true
+    primary_reads_enabled = false
+    healthcheck_timeout = {{ .Values.general.healthcheckTimeout }}
+    healthcheck_delay = {{ .Values.general.healthcheckDelay }}
+    ban_time = {{ .Values.general.banTime }}
+    server_tls = true
+    server_tls_certificate_verification = false
+
+    {{- $namespace := .Values.namespace }}
+    {{- $postgresService := .Values.postgres.primaryService }}
+    {{- $replicaCount := .Values.postgres.replicaCount | int }}
+    {{- range .Values.pools }}
+
+    # --- {{ .name }} ---
+    [pools.{{ .name }}]
+    pool_mode = {{ .poolMode | quote }}
+    default_role = "primary"
+    application_name = "pgcat"
+    query_parser_enabled = true
+    query_parser_read_write_splitting = true
+    primary_reads_enabled = false
+
+    [pools.{{ .name }}.users.{{ .username }}]
+    username = {{ .username | quote }}
+    password = {{ .password | quote }}
+    pool_size = {{ .poolSize }}
+    min_pool_size = {{ .minPoolSize }}
+    server_lifetime = {{ .serverLifetime }}
+    idle_timeout = {{ .idleTimeout }}
+
+    [pools.{{ .name }}.shards.0]
+    database = {{ .name | quote }}
+    servers = [
+      [{{ printf "%s.%s.svc.cluster.local" $postgresService $namespace | quote }}, 5432, "primary"],
+      {{- range $i := until $replicaCount }}
+      [{{ printf "postgres-%d.postgres.%s.svc.cluster.local" $i $namespace | quote }}, 5432, "replica"]{{ if lt (add1 $i) $replicaCount }},{{ end }}
+      {{- end }}
+    ]
+    {{- end }}

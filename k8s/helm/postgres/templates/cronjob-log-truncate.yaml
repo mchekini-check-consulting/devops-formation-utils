@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Chart.Name }}-log-truncate
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+spec:
+  schedule: "0 */5 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 0
+      template:
+        metadata:
+          labels:
+            app: {{ .Chart.Name }}-log-truncate
+        spec:
+          serviceAccountName: {{ .Chart.Name }}-log-truncate
+          automountServiceAccountToken: true
+          nodeSelector:
+            {{- toYaml .Values.nodeSelector | nindent 12 }}
+          tolerations:
+            {{- toYaml .Values.tolerations | nindent 12 }}
+          containers:
+            - name: log-truncate
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  for i in $(seq 0 {{ sub .Values.replicaCount 1 }}); do
+                    echo "Truncating CSV logs on {{ .Chart.Name }}-${i}..."
+                    kubectl exec {{ .Chart.Name }}-${i} -n {{ .Values.namespace }} -- \
+                      find /home/postgres/pgdata/pgroot/pg_log/ -name "*.csv" -exec truncate -s 0 {} + \
+                      && echo "Done for {{ .Chart.Name }}-${i}" \
+                      || echo "Failed for {{ .Chart.Name }}-${i}"
+                  done
+          restartPolicy: OnFailure

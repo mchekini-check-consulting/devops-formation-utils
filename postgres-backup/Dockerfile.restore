@@ -1,0 +1,45 @@
+FROM alpine:3.20
+RUN apk add --no-cache postgresql16-client curl
+RUN printf '#!/bin/sh\n\
+set -e\n\
+echo "[1/6] Requesting Azure access token..."\n\
+TOKEN=$(curl -sf -X POST \\\n\
+  "https://login.microsoftonline.com/${AZURE_TENANT_ID}/oauth2/v2.0/token" \\\n\
+  -d "grant_type=client_credentials&client_id=${AZURE_CLIENT_ID}&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=$(cat $AZURE_FEDERATED_TOKEN_FILE)&scope=https://storage.azure.com/.default" \\\n\
+  | sed -n '"'"'s/.*"access_token":"\\([^"]*\\)".*/\\1/p'"'"')\n\
+echo "[1/6] Token acquired"\n\
+BLOB_URL="https://stformationecombackup.blob.core.windows.net/postgres-backups/dev/${BACKUP_FILENAME}"\n\
+echo "[2/6] Downloading ${BACKUP_FILENAME} from ${BLOB_URL}..."\n\
+HTTP_CODE=$(curl -s -o /tmp/${BACKUP_FILENAME} -w "%%{http_code}" \\\n\
+  -H "Authorization: Bearer ${TOKEN}" \\\n\
+  -H "x-ms-version: 2020-04-08" \\\n\
+  "${BLOB_URL}")\n\
+if [ "$HTTP_CODE" != "200" ]; then\n\
+  echo "[2/6] ERROR: download failed with HTTP $HTTP_CODE"\n\
+  cat /tmp/${BACKUP_FILENAME}\n\
+  exit 1\n\
+fi\n\
+echo "[2/6] Download complete ($(wc -c < /tmp/${BACKUP_FILENAME}) bytes)"\n\
+echo "[3/6] Extracting archive..."\n\
+tar xf /tmp/${BACKUP_FILENAME} -C /tmp\n\
+DUMP=$(tar tf /tmp/${BACKUP_FILENAME} | grep "\\.sql\\.gz$")\n\
+SHA_FILE=$(tar tf /tmp/${BACKUP_FILENAME} | grep "\\.sha256$")\n\
+echo "[3/6] Extracted: $DUMP, $SHA_FILE"\n\
+echo "[4/6] Verifying checksum..."\n\
+EXPECTED=$(cat /tmp/${SHA_FILE} | tr -d "[:space:]")\n\
+ACTUAL=$(sha256sum /tmp/${DUMP} | cut -d " " -f 1)\n\
+if [ "$EXPECTED" != "$ACTUAL" ]; then\n\
+  echo "[4/6] ERROR: checksum mismatch — file is corrupted"\n\
+  echo "  Expected: $EXPECTED"\n\
+  echo "  Actual:   $ACTUAL"\n\
+  exit 1\n\
+fi\n\
+echo "[4/6] Checksum verified"\n\
+echo "[5/6] Decompressing dump..."\n\
+gzip -d /tmp/${DUMP}\n\
+SQL_FILE=/tmp/$(echo ${DUMP} | sed "s/.gz$//")\n\
+echo "[5/6] Decompressed ($(wc -c < ${SQL_FILE}) bytes)"\n\
+echo "[6/6] Restoring all databases to ${PG_HOST}..."\n\
+psql -h "$PG_HOST" -U "$PG_USER" -d postgres -f "${SQL_FILE}"\n\
+echo "[6/6] Restore complete"\n' > /restore.sh && chmod +x /restore.sh
+ENTRYPOINT ["/restore.sh"]

@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pg-restore
+  namespace: postgres-backup
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: sa-pg-backup
+      restartPolicy: Never
+      initContainers:
+        - name: wait-for-primary
+          image: crformation.azurecr.io/pg-backup:1.0
+          imagePullPolicy: Always
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Waiting for PostgreSQL primary to be ready..."
+              RETRIES=0
+              MAX_RETRIES=5
+              until pg_isready -h "$PG_HOST" -p 5432 -U "$PG_USER"; do
+                RETRIES=$((RETRIES + 1))
+                if [ "$RETRIES" -ge "$MAX_RETRIES" ]; then
+                  echo "Primary not ready after $MAX_RETRIES attempts, aborting"
+                  exit 1
+                fi
+                echo "Primary not ready, retrying in 2s... ($RETRIES/$MAX_RETRIES)"
+                sleep 2
+              done
+              echo "Primary is ready"
+          env:
+            - name: PG_HOST
+              value: postgres-primary.dev.svc.cluster.local
+            - name: PG_USER
+              value: postgres
+      containers:
+        - name: pg-restore
+          image: crformation.azurecr.io/pg-restore:1.0
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: BACKUP_FILENAME
+              value: "${BACKUP_FILENAME}"
+            - name: PG_HOST
+              value: postgres-primary.dev.svc.cluster.local
+            - name: PG_USER
+              value: postgres
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-backup-credentials
+                  key: postgres-password

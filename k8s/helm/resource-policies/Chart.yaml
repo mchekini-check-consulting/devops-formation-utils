@@ -1,0 +1,5 @@
+apiVersion: v2
+name: resource-policies
+description: LimitRange et ResourceQuota par namespace
+type: application
+version: 0.1.0

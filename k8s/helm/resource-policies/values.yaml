@@ -1,0 +1,24 @@
+namespace: dev
+
+limitRange:
+  defaultRequest:
+    cpu: 50m
+    memory: 64Mi
+  default:
+    cpu: 250m
+    memory: 256Mi
+  min:
+    cpu: 10m
+    memory: 32Mi
+  max:
+    cpu: "2"
+    memory: 2Gi
+
+quota:
+  requests:
+    cpu: "3"
+    memory: 5Gi
+  limits:
+    cpu: "10"
+    memory: 12Gi
+  pods: "25"
