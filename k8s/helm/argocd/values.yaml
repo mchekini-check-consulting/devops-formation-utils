@@ -1,0 +1,50 @@
+# ArgoCD Helm values - HA setup with Azure AD SSO
+# Chart: argo/argo-cd from https://argoproj.github.io/argo-helm
+
+# ── HA: 3 replicas for core components ──
+controller:
+  replicas: 3
+
+repoServer:
+  replicas: 3
+
+server:
+  replicas: 3
+
+  # Service type LoadBalancer (no Ingress)
+  service:
+    type: LoadBalancer
+
+  # ArgoCD serves HTTPS with self-signed cert
+  extraArgs: []
+
+# ── SSO OIDC (Azure AD via sp-formation-cicd) ──
+configs:
+  cm:
+    url: ""  # Set to LoadBalancer external IP/DNS after deployment
+    oidc.config: |
+      name: Azure AD
+      issuer: https://login.microsoftonline.com/6902d3b0-d2cd-4bc6-98ac-143e83b162d7/v2.0
+      clientID: 58da4cc7-4763-4339-a0e5-8b8868a49049
+      clientSecret: $oidc.azure.clientSecret
+      requestedScopes:
+        - openid
+        - profile
+        - email
+
+  # ── RBAC ──
+  rbac:
+    policy.csv: |
+      g, c8af8cea-*, role:admin
+    policy.default: role:readonly
+    scopes: "[groups]"
+
+  params:
+    server.insecure: false
+
+# ── Désactiver les composants inutilisés ──
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
