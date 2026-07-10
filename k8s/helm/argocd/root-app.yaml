@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+# root-app.yaml — Application root-app (App-of-Apps pattern)
+#
+# Prérequis :
+#   - ArgoCD installé (./install.sh)
+#   - Credentials du repo GitOps configurés (repo-gitops-secret.yaml)
+#
+# Usage :
+#   kubectl apply -f root-app.yaml
+#
+# Chaîne de déploiement :
+#   root-app → bootstrap/root-app.yaml → applicationsets/microservices.yaml
+#   → 12 Applications (4 microservices x 3 environnements)
+# ---------------------------------------------------------------------------
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/juba-touam/devops-formation-gitops.git
+    targetRevision: main
+    path: bootstrap/
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
