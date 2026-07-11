@@ -20,8 +20,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/juba-touam/devops-formation-gitops.git
-    targetRevision: main
+    repoURL: https://github.com/mchekini-check-consulting/devops-formation-gitops.git
+    targetRevision: feat/postgres
     path: bootstrap/
   destination:
     server: https://kubernetes.default.svc
