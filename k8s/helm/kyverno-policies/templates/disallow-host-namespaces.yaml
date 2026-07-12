@@ -10,8 +10,8 @@ metadata:
       Host namespaces (PID, IPC, Network) should not be shared with
       containers. This policy ensures pods do not use host namespaces.
 spec:
-  failureAction: {{ .Values.failureAction }}
-  failureActionOverrides:
+  validationFailureAction: {{ .Values.validationFailureAction }}
+  validationFailureActionOverrides:
     {{- range .Values.enforceNamespaces }}
     - action: Enforce
       namespaces:

@@ -1,4 +1,4 @@
-failureAction: Audit
+validationFailureAction: Audit
 
 enforceNamespaces:
   - prod

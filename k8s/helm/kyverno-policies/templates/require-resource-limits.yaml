@@ -10,8 +10,8 @@ metadata:
       Containers must define CPU and memory limits to prevent resource
       exhaustion and ensure fair scheduling.
 spec:
-  failureAction: {{ .Values.failureAction }}
-  failureActionOverrides:
+  validationFailureAction: {{ .Values.validationFailureAction }}
+  validationFailureActionOverrides:
     {{- range .Values.enforceNamespaces }}
     - action: Enforce
       namespaces:
