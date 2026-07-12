@@ -1,0 +1,38 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-security-context
+  annotations:
+    policies.kyverno.io/title: Add Default Security Context
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Adds a default securityContext to containers that do not already
+      have one defined, enforcing runAsNonRoot, readOnlyRootFilesystem,
+      and disabling privilege escalation.
+spec:
+  rules:
+    - name: add-default-security-context
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                {{- range .Values.excludeNamespaces }}
+                - {{ . }}
+                {{- end }}
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers"
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{`{{element.name}}`}}"
+                    securityContext:
+                      +(runAsNonRoot): true
+                      +(readOnlyRootFilesystem): true
+                      +(allowPrivilegeEscalation): false

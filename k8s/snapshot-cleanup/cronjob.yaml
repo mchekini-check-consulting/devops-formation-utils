@@ -48,7 +48,7 @@ spec:
 
                   echo "$TO_DELETE" | while read -r id; do
                     echo "Deleting: $(basename $id)"
-                    az snapshot delete --ids "$id" --yes
+                    az snapshot delete --ids "$id"
                   done
 
                   echo "Remaining snapshots:"

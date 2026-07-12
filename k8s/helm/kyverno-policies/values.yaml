@@ -1,0 +1,23 @@
+failureAction: Audit
+
+enforceNamespaces:
+  - prod
+
+excludeNamespaces:
+  - kube-system
+  - kyverno
+  - argocd
+  - ingress-nginx
+  - sonarqube
+
+allowedRegistries:
+  - "docker.io/library/*"
+  - "docker.io/bitnami/*"
+  - "ghcr.io/*"
+  - "registry.k8s.io/*"
+  - "quay.io/*"
+  - "*.azurecr.io/*"
+
+requiredLabels:
+  - "app.kubernetes.io/name"
+  - "app.kubernetes.io/managed-by"
