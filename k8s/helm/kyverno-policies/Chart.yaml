@@ -1,0 +1,5 @@
+apiVersion: v2
+name: kyverno-policies
+description: Kyverno ClusterPolicies for security and best practices
+version: 0.1.0
+type: application

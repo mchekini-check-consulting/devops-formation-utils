@@ -1,0 +1,43 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-labels
+  annotations:
+    policies.kyverno.io/title: Require Labels
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Resources must have standard Kubernetes labels for identification
+      and management purposes.
+spec:
+  failureAction: {{ .Values.failureAction }}
+  failureActionOverrides:
+    {{- range .Values.enforceNamespaces }}
+    - action: Enforce
+      namespaces:
+        - {{ . }}
+    {{- end }}
+  rules:
+    - name: require-labels
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                {{- range .Values.excludeNamespaces }}
+                - {{ . }}
+                {{- end }}
+      validate:
+        message: "The labels {{ .Values.requiredLabels | join ", " }} are required."
+        pattern:
+          metadata:
+            labels:
+              {{- range .Values.requiredLabels }}
+              {{ . }}: "?*"
+              {{- end }}
