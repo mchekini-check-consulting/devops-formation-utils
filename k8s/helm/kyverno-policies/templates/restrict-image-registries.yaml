@@ -10,8 +10,8 @@ metadata:
       Images must come from approved registries only. This policy restricts
       container images to a predefined list of trusted registries.
 spec:
-  failureAction: {{ .Values.failureAction }}
-  failureActionOverrides:
+  validationFailureAction: {{ .Values.validationFailureAction }}
+  validationFailureActionOverrides:
     {{- range .Values.enforceNamespaces }}
     - action: Enforce
       namespaces:

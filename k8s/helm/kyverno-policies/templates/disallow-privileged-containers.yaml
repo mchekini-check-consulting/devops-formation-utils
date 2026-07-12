@@ -10,8 +10,8 @@ metadata:
       Privileged containers have full access to the host. This policy
       ensures that privileged mode is not enabled on any container.
 spec:
-  failureAction: {{ .Values.failureAction }}
-  failureActionOverrides:
+  validationFailureAction: {{ .Values.validationFailureAction }}
+  validationFailureActionOverrides:
     {{- range .Values.enforceNamespaces }}
     - action: Enforce
       namespaces:

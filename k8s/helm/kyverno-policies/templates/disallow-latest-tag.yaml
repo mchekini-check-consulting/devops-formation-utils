@@ -11,8 +11,8 @@ metadata:
       This policy requires that container images specify an explicit tag
       different from 'latest'.
 spec:
-  failureAction: {{ .Values.failureAction }}
-  failureActionOverrides:
+  validationFailureAction: {{ .Values.validationFailureAction }}
+  validationFailureActionOverrides:
     {{- range .Values.enforceNamespaces }}
     - action: Enforce
       namespaces:

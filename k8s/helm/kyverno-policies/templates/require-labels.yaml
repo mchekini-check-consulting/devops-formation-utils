@@ -10,8 +10,8 @@ metadata:
       Resources must have standard Kubernetes labels for identification
       and management purposes.
 spec:
-  failureAction: {{ .Values.failureAction }}
-  failureActionOverrides:
+  validationFailureAction: {{ .Values.validationFailureAction }}
+  validationFailureActionOverrides:
     {{- range .Values.enforceNamespaces }}
     - action: Enforce
       namespaces:

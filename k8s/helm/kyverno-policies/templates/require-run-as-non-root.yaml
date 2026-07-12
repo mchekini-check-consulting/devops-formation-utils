@@ -10,8 +10,8 @@ metadata:
       Containers must run as non-root users. This policy ensures that
       runAsNonRoot is set to true in the pod or container securityContext.
 spec:
-  failureAction: {{ .Values.failureAction }}
-  failureActionOverrides:
+  validationFailureAction: {{ .Values.validationFailureAction }}
+  validationFailureActionOverrides:
     {{- range .Values.enforceNamespaces }}
     - action: Enforce
       namespaces:
