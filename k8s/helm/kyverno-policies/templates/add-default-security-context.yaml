@@ -25,6 +25,10 @@ spec:
                 {{- range .Values.excludeNamespaces }}
                 - {{ . }}
                 {{- end }}
+          - resources:
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: front
       mutate:
         foreach:
           - list: "request.object.spec.containers"

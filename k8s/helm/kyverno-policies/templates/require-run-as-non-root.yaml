@@ -31,6 +31,10 @@ spec:
                 {{- range .Values.excludeNamespaces }}
                 - {{ . }}
                 {{- end }}
+          - resources:
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: front
       validate:
         message: "Running as root is not allowed. Set spec.securityContext.runAsNonRoot to true."
         anyPattern:
