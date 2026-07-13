@@ -11,6 +11,7 @@ excludeNamespaces:
   - sonarqube
   - calico-system
   - tigera-operator
+  - argo-rollouts
 
 allowedRegistries:
   - "docker.io/library/*"
