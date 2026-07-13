@@ -35,6 +35,10 @@ spec:
               selector:
                 matchLabels:
                   app.kubernetes.io/name: front
+          - resources:
+              selector:
+                matchLabels:
+                  app: postgres
       validate:
         message: "Running as root is not allowed. Set spec.securityContext.runAsNonRoot to true."
         anyPattern:

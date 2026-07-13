@@ -29,6 +29,10 @@ spec:
               selector:
                 matchLabels:
                   app.kubernetes.io/name: front
+          - resources:
+              selector:
+                matchLabels:
+                  app: postgres
       mutate:
         foreach:
           - list: "request.object.spec.containers"
