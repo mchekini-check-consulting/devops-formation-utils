@@ -1,0 +1,32 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-annotations
+  annotations:
+    policies.kyverno.io/title: Add Default Annotations
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Adds standard annotations to Pods with the deployment date
+      and source managed-by information.
+spec:
+  rules:
+    - name: add-default-annotations
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                {{- range .Values.excludeNamespaces }}
+                - {{ . }}
+                {{- end }}
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              +(deploy.kubernetes.io/date): "{{`{{request.object.metadata.creationTimestamp}}`}}"
+              +(deploy.kubernetes.io/source): "argocd"
