@@ -7,8 +7,7 @@ metadata:
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: low
     policies.kyverno.io/description: >-
-      Adds standard annotations to Pods with the deployment date
-      and source managed-by information.
+      Adds source managed-by annotation to Pods.
 spec:
   rules:
     - name: add-default-annotations
@@ -28,5 +27,4 @@ spec:
         patchStrategicMerge:
           metadata:
             annotations:
-              +(deploy.kubernetes.io/date): "{{`{{request.object.metadata.creationTimestamp}}`}}"
               +(deploy.kubernetes.io/source): "argocd"
