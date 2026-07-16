@@ -12,6 +12,7 @@ excludeNamespaces:
   - calico-system
   - tigera-operator
   - argo-rollouts
+  - vault
 
 allowedRegistries:
   - "docker.io/library/*"
