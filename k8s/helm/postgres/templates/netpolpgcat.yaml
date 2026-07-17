@@ -26,6 +26,9 @@ spec:
         - podSelector:
             matchLabels:
               app: payment
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: keycloak
       ports:
         - port: 5432
           protocol: TCP
