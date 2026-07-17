@@ -25,7 +25,7 @@ allowedRegistries:
   - "registry.k8s.io/*"
   - "quay.io/*"
   - "*.azurecr.io/*"
-  - "registry.bitnami.com/*"
+  - "docker.io/bitnamilegacy/*"
 
 requiredLabels:
   - "app.kubernetes.io/name"
