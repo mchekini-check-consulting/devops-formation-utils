@@ -56,7 +56,7 @@ pools:
     idleTimeout: 60
 
   - name: keycloak
-    poolMode: transaction
+    poolMode: session
     username: keycloak
     password: admin123
     poolSize: 10
