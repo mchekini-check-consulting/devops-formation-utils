@@ -13,6 +13,7 @@ excludeNamespaces:
   - tigera-operator
   - argo-rollouts
   - vault
+  - external-secrets
 
 allowedRegistries:
   - "docker.io/library/*"
