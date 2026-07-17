@@ -28,6 +28,12 @@ data:
         ELSE
           ALTER USER formation WITH ENCRYPTED PASSWORD 'test';
         END IF;
+
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'keycloak') THEN
+          CREATE USER keycloak WITH ENCRYPTED PASSWORD '${KEYCLOAK_PASSWORD}';
+        ELSE
+          ALTER USER keycloak WITH ENCRYPTED PASSWORD '${KEYCLOAK_PASSWORD}';
+        END IF;
       END
       \$\$;
 
@@ -42,6 +48,7 @@ data:
       SELECT 'CREATE DATABASE catalogue OWNER formation' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'catalogue')\gexec
       SELECT 'CREATE DATABASE "order" OWNER formation'  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'order')\gexec
       SELECT 'CREATE DATABASE payment OWNER formation'  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'payment')\gexec
+      SELECT 'CREATE DATABASE keycloak OWNER keycloak' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'keycloak')\gexec
     EOSQL
 
     for db in catalogue order payment; do
@@ -51,3 +58,9 @@ data:
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO formation;
     EOSQL
     done
+
+    psql -v ON_ERROR_STOP=1 -U postgres -d keycloak <<EOSQL
+      GRANT ALL ON SCHEMA public TO keycloak;
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES    TO keycloak;
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO keycloak;
+    EOSQL

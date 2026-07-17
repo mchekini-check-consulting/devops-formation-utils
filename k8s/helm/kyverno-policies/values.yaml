@@ -15,6 +15,8 @@ excludeNamespaces:
   - vault
   - external-secrets
   - reloader
+  - cert-manager
+  - keycloak
 
 allowedRegistries:
   - "docker.io/library/*"
