@@ -55,5 +55,14 @@ pools:
     serverLifetime: 3600
     idleTimeout: 60
 
+  - name: keycloak
+    poolMode: transaction
+    username: keycloak
+    password: admin123
+    poolSize: 10
+    minPoolSize: 1
+    serverLifetime: 300
+    idleTimeout: 60
+
 pdb:
   minAvailable: 1
