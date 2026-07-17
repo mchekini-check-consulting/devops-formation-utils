@@ -15,7 +15,7 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}
+        {{- include "postgres.labels" . | nindent 8 }}
         patroni-cluster: {{ .Values.scope }}
     spec:
       serviceAccountName: {{ .Chart.Name }}-patroni
