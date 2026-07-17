@@ -17,6 +17,8 @@ spec:
         metadata:
           labels:
             app: {{ .Chart.Name }}-log-truncate
+            app.kubernetes.io/name: {{ .Chart.Name }}-log-truncate
+            app.kubernetes.io/managed-by: {{ .Release.Service }}
         spec:
           serviceAccountName: {{ .Chart.Name }}-log-truncate
           automountServiceAccountToken: true
@@ -26,7 +28,14 @@ spec:
             {{- toYaml .Values.tolerations | nindent 12 }}
           containers:
             - name: log-truncate
-              image: bitnami/kubectl:latest
+              image: bitnami/kubectl:1.31
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
               command:
                 - /bin/sh
                 - -c

@@ -14,6 +14,7 @@ excludeNamespaces:
   - argo-rollouts
   - vault
   - external-secrets
+  - reloader
 
 allowedRegistries:
   - "docker.io/library/*"
