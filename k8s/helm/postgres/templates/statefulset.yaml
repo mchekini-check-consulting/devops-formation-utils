@@ -88,6 +88,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Chart.Name }}-credentials
                   key: RESTORE_PASSWORD
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-credentials
+                  key: KEYCLOAK_PASSWORD
             - name: SPILO_CONFIGURATION
               value: |
                 kubernetes:
