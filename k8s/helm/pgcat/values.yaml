@@ -3,8 +3,8 @@ namespace: dev
 replicaCount: 2
 
 image:
-  repository: ghcr.io/postgresml/pgcat
-  tag: latest
+  repository: docker.io/pgedge/pgcat
+  tag: "1.1"
 
 resources:
   requests:
