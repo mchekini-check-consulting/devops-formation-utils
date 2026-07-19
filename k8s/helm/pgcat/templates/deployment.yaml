@@ -30,13 +30,9 @@ spec:
             matchLabels:
               {{- include "pgcat.selectorLabels" . | nindent 14 }}
 
-      securityContext:
-        runAsNonRoot: true
       containers:
         - name: {{ .Chart.Name }}
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          securityContext:
-            allowPrivilegeEscalation: false
           ports:
             - name: postgres
               containerPort: 5432

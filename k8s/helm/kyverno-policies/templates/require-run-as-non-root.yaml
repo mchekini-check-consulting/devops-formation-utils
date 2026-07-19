@@ -39,6 +39,10 @@ spec:
               selector:
                 matchLabels:
                   app: postgres
+          - resources:
+              selector:
+                matchLabels:
+                  app: pgcat
       validate:
         message: "Running as root is not allowed. Set spec.securityContext.runAsNonRoot to true."
         anyPattern:
