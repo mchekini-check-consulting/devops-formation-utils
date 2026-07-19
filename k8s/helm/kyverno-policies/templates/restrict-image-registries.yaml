@@ -31,9 +31,6 @@ spec:
                 {{- range .Values.excludeNamespaces }}
                 - {{ . }}
                 {{- end }}
-          - resources:
-              annotations:
-                sidecar.istio.io/status: "*"
       validate:
         message: "Images must come from an approved registry."
         foreach:
