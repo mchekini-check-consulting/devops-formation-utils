@@ -63,6 +63,7 @@ pools:
     minPoolSize: 1
     serverLifetime: 300
     idleTimeout: 60
+    readWriteSplitting: false
 
 pdb:
   minAvailable: 1
