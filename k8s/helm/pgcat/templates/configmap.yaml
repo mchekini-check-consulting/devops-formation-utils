@@ -35,7 +35,7 @@ data:
     default_role = "primary"
     application_name = "pgcat"
     query_parser_enabled = true
-    query_parser_read_write_splitting = true
+    query_parser_read_write_splitting = {{ if hasKey . "readWriteSplitting" }}{{ .readWriteSplitting }}{{ else }}true{{ end }}
     primary_reads_enabled = false
 
     [pools.{{ .name }}.users.{{ .username }}]
