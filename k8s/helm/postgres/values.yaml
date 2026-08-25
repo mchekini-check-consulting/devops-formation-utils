@@ -61,6 +61,3 @@ probes:
   liveness:
     periodSeconds: 10
     failureThreshold: 6
-
-pdb:
-  minAvailable: 2
