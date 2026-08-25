@@ -7,8 +7,10 @@
 #   - helm installé
 #
 # Étapes suivantes après exécution :
-#   1. ./configure-oidc.sh   → SSO Azure AD
-#   2. ./bootstrap.sh        → root-app GitOps + credentials repo
+#   1. kubectl apply -f repo-gitops-secret.yaml  (credentials repo GitOps)
+#   2. kubectl apply -f root-app.yaml            (App-of-Apps root-app)
+#   (SSO: pas configuré pour l'instant, voir configure-oidc.sh — Azure AD,
+#    à remplacer par un équivalent AWS IAM Identity Center si besoin)
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
@@ -44,6 +46,5 @@ echo
 echo ""
 echo "==> Installation complete!"
 echo "    Next steps:"
-echo "    1. ./configure-oidc.sh   (Azure AD SSO)"
-echo "    2. kubectl apply -f repo-gitops-secret.yaml  (credentials repo GitOps)"
-echo "    3. kubectl apply -f root-app.yaml            (App-of-Apps root-app)"
+echo "    1. kubectl apply -f repo-gitops-secret.yaml  (credentials repo GitOps)"
+echo "    2. kubectl apply -f root-app.yaml            (App-of-Apps root-app)"

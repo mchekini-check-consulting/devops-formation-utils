@@ -11,33 +11,19 @@ repoServer:
 server:
   replicas: 3
 
-  # Service type LoadBalancer (no Ingress)
+  # Service type LoadBalancer (no Ingress) - provisions an AWS ELB
   service:
     type: LoadBalancer
 
   # ArgoCD serves HTTPS with self-signed cert
   extraArgs: []
 
-# ── SSO OIDC (Azure AD via sp-formation-cicd) ──
+# ── SSO: none for now, admin/initial-admin-secret only ──
+# Ré-ajouter un bloc `configs.cm.oidc.config` + `configs.rbac` ici quand
+# le SSO (AWS IAM Identity Center ou autre) sera décidé.
 configs:
   cm:
     url: ""  # Set to LoadBalancer external IP/DNS after deployment
-    oidc.config: |
-      name: Azure AD
-      issuer: https://login.microsoftonline.com/6902d3b0-d2cd-4bc6-98ac-143e83b162d7/v2.0
-      clientID: 58da4cc7-4763-4339-a0e5-8b8868a49049
-      clientSecret: $oidc.azure.clientSecret
-      requestedScopes:
-        - openid
-        - profile
-        - email
-
-  # ── RBAC ──
-  rbac:
-    policy.csv: |
-      g, c8af8cea-*, role:admin
-    policy.default: role:readonly
-    scopes: "[groups]"
 
   params:
     server.insecure: false
