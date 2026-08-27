@@ -36,7 +36,7 @@ spec:
         - imageReferences:
             - "docker.io/jubatouam/order:*"
           required: true
-          mutateDigest: true
+          mutateDigest: false
           attestors:
             - entries:
                 - keyless:
