@@ -1,0 +1,46 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-signed-order-image
+  annotations:
+    policies.kyverno.io/title: Require Signed Order Image
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      The order image must be signed by the devops-formation-order CD pipeline
+      (cosign keyless signature, verified against its GitHub Actions OIDC
+      identity). Other images/services are out of scope for this policy.
+spec:
+  validationFailureAction: {{ .Values.validationFailureAction }}
+  validationFailureActionOverrides:
+    {{- range .Values.enforceNamespaces }}
+    - action: Enforce
+      namespaces:
+        - {{ . }}
+    {{- end }}
+  rules:
+    - name: verify-order-image-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                {{- range .Values.excludeNamespaces }}
+                - {{ . }}
+                {{- end }}
+      verifyImages:
+        - imageReferences:
+            - "docker.io/jubatouam/order:*"
+          required: true
+          mutateDigest: true
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/mchekini-check-consulting/devops-formation-order/.github/workflows/cd.yml@refs/heads/main"
+                    issuer: "https://token.actions.githubusercontent.com"
+                    rekor:
+                      url: https://rekor.sigstore.dev
