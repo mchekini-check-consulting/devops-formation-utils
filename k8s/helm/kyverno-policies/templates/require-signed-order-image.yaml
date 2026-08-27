@@ -12,13 +12,11 @@ metadata:
       (cosign keyless signature, verified against its GitHub Actions OIDC
       identity). Other images/services are out of scope for this policy.
 spec:
-  validationFailureAction: {{ .Values.validationFailureAction }}
-  validationFailureActionOverrides:
-    {{- range .Values.enforceNamespaces }}
-    - action: Enforce
-      namespaces:
-        - {{ . }}
-    {{- end }}
+  # Enforce en dur (pas Audit) : mutateDigest=true est indispensable pour que
+  # la verification de signature aboutisse (sinon "missing digest" meme quand
+  # la signature est valide), or Kyverno interdit mutateDigest=true en mode
+  # Audit. Sans impact reel puisque order ne tourne qu'en prod.
+  validationFailureAction: Enforce
   rules:
     - name: verify-order-image-signature
       match:
@@ -37,7 +35,7 @@ spec:
         - imageReferences:
             - "docker.io/jubatouam/order:*"
           required: true
-          mutateDigest: false
+          mutateDigest: true
           attestors:
             - entries:
                 - keyless:
