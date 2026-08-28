@@ -9,13 +9,9 @@ replicaCount: 3
 scope: postgres-cluster
 
 nodeSelector:
-  workload: database
+  workload: apps
 
-tolerations:
-  - key: workload
-    operator: Equal
-    value: database
-    effect: NoSchedule
+tolerations: []
 
 resources:
   requests:
