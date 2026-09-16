@@ -8,10 +8,12 @@ replicaCount: 3
 
 scope: postgres-cluster
 
-nodeSelector:
-  workload: apps
+nodeSelector: {}
 
-tolerations: []
+tolerations:
+  - key: "CriticalAddonsOnly"
+    operator: "Exists"
+    effect: "NoSchedule"
 
 resources:
   requests:
