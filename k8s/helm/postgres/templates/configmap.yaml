@@ -64,3 +64,11 @@ data:
       ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES    TO keycloak;
       ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO keycloak;
     EOSQL
+
+    # pgvector n'est pas marque "trusted" sur cette image Spilo : CREATE EXTENSION
+    # exige un superuser. formation (owner de catalogue) ne peut pas l'activer
+    # lui-meme, d'ou l'activation ici plutot que dans une migration applicative.
+    # Assistant produit RAG (catalog-service) : stockage des embeddings produits.
+    psql -v ON_ERROR_STOP=1 -U postgres -d catalogue <<EOSQL
+      CREATE EXTENSION IF NOT EXISTS vector;
+    EOSQL
