@@ -28,7 +28,7 @@ spec:
             {{- toYaml .Values.tolerations | nindent 12 }}
           containers:
             - name: log-truncate
-              image: alpine/kubectl:1.36.2
+              image: docker.io/alpine/kubectl:1.36.2
               resources:
                 requests:
                   cpu: 10m
